@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дни недели с цифрами</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .day-container {
+            margin-bottom: 15px;
+        }
+        .day-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            margin: 2px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .number.selected {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>Дни недели с цифрами</h1>
+    
+    <div id="days-container">
+        <!-- Дни недели будут добавлены здесь JavaScript -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+            const numbers = [1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4];
+            const container = document.getElementById('days-container');
+            const today = new Date();
+            const todayDayOfWeek = today.getDay(); // 0 - воскресенье, 1 - понедельник и т.д.
+            
+            // Создаем контейнеры для каждого дня недели
+            daysOfWeek.forEach((dayName, index) => {
+                const dayContainer = document.createElement('div');
+                dayContainer.className = 'day-container';
+                
+                const dayTitle = document.createElement('div');
+                dayTitle.className = 'day-title';
+                
+                // Рассчитываем дату для этого дня недели
+                const dayDate = new Date(today);
+                let diff = index - todayDayOfWeek + 1;
+                if (todayDayOfWeek === 0) diff = index + 1; // для воскресенья
+                if (diff < 0) diff += 7;
+                dayDate.setDate(today.getDate() + diff);
+                
+                const dateStr = dayDate.toLocaleDateString('ru-RU');
+                dayTitle.textContent = `${dayName} ${dateStr}`;
+                
+                dayContainer.appendChild(dayTitle);
+                
+                // Добавляем цифры
+                numbers.forEach(num => {
+                    const numberElement = document.createElement('div');
+                    numberElement.className = 'number';
+                    numberElement.textContent = num;
+                    numberElement.dataset.day = index;
+                    numberElement.addEventListener('click', function() {
+                        // Удаляем класс selected у всех цифр этого дня
+                        const allNumbersThisDay = document.querySelectorAll(`.number[data-day="${index}"]`);
+                        allNumbersThisDay.forEach(el => el.classList.remove('selected'));
+                        
+                        // Добавляем класс selected к выбранной цифре
+                        this.classList.add('selected');
+                        
+                        // Сохраняем в localStorage
+                        localStorage.setItem(`selectedNumber-${index}-${dateStr}`, this.textContent);
+                    });
+                    
+                    dayContainer.appendChild(numberElement);
+                });
+                
+                container.appendChild(dayContainer);
+            });
+            
+            // Проверяем localStorage для восстановления выбранных цифр
+            checkSelectedNumbers();
+            
+            // Проверяем время и обновляем даты при необходимости
+            checkDateUpdate();
+            
+            // Проверяем каждую минуту, не настала ли полночь
+            setInterval(checkDateUpdate, 60000);
+        });
+        
+        function checkSelectedNumbers() {
+            const numberElements = document.querySelectorAll('.number');
+            const dayTitles = document.querySelectorAll('.day-title');
+            
+            dayTitles.forEach((title, dayIndex) => {
+                const dateStr = title.textContent.split(' ').pop();
+                const selectedNumber = localStorage.getItem(`selectedNumber-${dayIndex}-${dateStr}`);
+                
+                if (selectedNumber) {
+                    numberElements.forEach(el => {
+                        if (el.dataset.day == dayIndex && el.textContent === selectedNumber) {
+                            el.classList.add('selected');
+                        }
+                    });
+                }
+            });
+        }
+        
+        function checkDateUpdate() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            // Если сейчас между 00:00 и 00:01, обновляем страницу
+            if (hours === 0 && minutes <= 1) {
+                // Очищаем выбранные цифры для всех дней
+                const numberElements = document.querySelectorAll('.number');
+                numberElements.forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Обновляем страницу, чтобы показать новые даты
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
